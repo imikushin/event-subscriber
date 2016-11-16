@@ -1,5 +1,10 @@
 package events
 
+import (
+	"strconv"
+	"time"
+)
+
 type Event struct {
 	Name                         string                 `json:"name,omitempty"`
 	ID                           string                 `json:"id,omitempty"`
@@ -14,7 +19,23 @@ type Event struct {
 	TransitioningMessage         string                 `json:"transitioningMessage,omitempty"`
 	TransitioningProgress        string                 `json:"transitioningProgress,omitempty"`
 	Data                         map[string]interface{} `json:"data,omitempty"`
-	Time                         int64                  `json:"time,omitempty"`
+	Time                         *EventTime             `json:"time,omitempty"`
+}
+
+type EventTime time.Time
+
+func (et EventTime) MarshalJSON() ([]byte, error) {
+	t := time.Time(et)
+	return []byte(strconv.FormatInt(t.UnixNano()/1000000, 10)), nil
+}
+
+func (et *EventTime) UnmarshalJSON(data []byte) error {
+	t, err := strconv.ParseInt(string(data), 0, 64)
+	if err != nil {
+		return err
+	}
+	*et = EventTime(time.Unix(t/1000, t%1000*1000000))
+	return nil
 }
 
 type ReplyEvent struct {
